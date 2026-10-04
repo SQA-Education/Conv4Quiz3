@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Immigration Information Window Challenge</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#7c3aed 0%,#4c1d95 100%);min-height:100vh;padding:20px}
+.container{max-width:700px;margin:0 auto}
+.header{background:#fff;border-radius:20px;padding:25px;margin-bottom:20px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.2)}
+.header h1{color:#7c3aed;font-size:1.35em;margin-bottom:5px}
+.quiz-badge{background:#7c3aed;color:#fff;padding:4px 12px;border-radius:20px;font-size:.8em;display:inline-block;margin-bottom:10px}
+.level-tag{background:#ede9fe;color:#7c3aed;padding:3px 10px;border-radius:10px;font-size:.75em;margin-left:8px}
+.timer-bar{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:15px;padding:10px;background:#fff3cd;border-radius:10px}
+.timer-bar .time{font-size:1.2em;font-weight:700;color:#856404}
+.timer-bar.warning{background:#ffebee}.timer-bar.warning .time{color:#c62828}
+.card{background:#fff;border-radius:16px;padding:25px;margin-bottom:15px;box-shadow:0 4px 15px rgba(0,0,0,.1)}
+.progress-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+.progress-text{font-size:.9em;color:#666}
+.xp-display{background:#ede9fe;padding:6px 12px;border-radius:20px;font-weight:600;color:#7c3aed;font-size:.9em}
+.progress-bar-bg{height:8px;background:#e0e0e0;border-radius:4px;overflow:hidden;margin-bottom:20px}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg,#7c3aed,#4c1d95);border-radius:4px;transition:width 0.3s}
+.question{margin-bottom:25px}
+.question-header{display:flex;align-items:flex-start;gap:10px;margin-bottom:15px}
+.question-num{background:#7c3aed;color:#fff;min-width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9em;flex-shrink:0}
+.question-text{font-size:1em;color:#333;font-weight:500;line-height:1.5}
+.options{display:flex;flex-direction:column;gap:10px}
+.option{padding:14px;border:2px solid #e0e0e0;border-radius:12px;cursor:pointer;display:flex;align-items:flex-start;gap:12px;transition:all .2s}
+.option:hover{border-color:#7c3aed;background:#ede9fe}
+.option.selected{border-color:#7c3aed;background:#ddd6fe}
+.option.correct{border-color:#22c55e;background:#f0fdf4}
+.option.incorrect{border-color:#ef4444;background:#fef2f2}
+.option.disabled{pointer-events:none}
+.option-letter{width:28px;height:28px;border:2px solid #ccc;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:.85em;flex-shrink:0;margin-top:1px}
+.option.selected .option-letter{border-color:#7c3aed;background:#7c3aed;color:#fff}
+.option.correct .option-letter{border-color:#22c55e;background:#22c55e;color:#fff}
+.option.incorrect .option-letter{border-color:#ef4444;background:#ef4444;color:#fff}
+.option-text{flex:1;font-size:.95em;line-height:1.4}
+.feedback{margin-top:10px;padding:12px 15px;border-radius:10px;font-size:.9em;display:none;line-height:1.5}
+.feedback.correct{background:#f0fdf4;border:1px solid #22c55e;color:#166534}
+.feedback.incorrect{background:#fef2f2;border:1px solid #ef4444;color:#991b1b}
+.feedback.show{display:block}
+.btn{background:#7c3aed;color:#fff;border:none;padding:14px 32px;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;width:100%;margin-top:15px;transition:all .2s}
+.btn:hover{opacity:.88}.btn:disabled{background:#ccc;cursor:not-allowed}
+.btn-next{background:#22c55e}.btn-next:hover{background:#16a34a}
+.results-screen{display:none}
+.results-card{background:linear-gradient(135deg,#7c3aed,#4c1d95);border-radius:20px;padding:35px;color:#fff;text-align:center}
+.results-score{font-size:4em;font-weight:700}
+.results-label{font-size:1.2em;opacity:.9;margin-top:5px}
+.results-message{font-size:1.2em;margin-top:20px;padding:15px;background:rgba(255,255,255,.15);border-radius:12px}
+.results-xp{margin-top:20px;font-size:1.1em}
+.results-xp span{font-size:1.5em;font-weight:700}
+.results-details{background:#fff;border-radius:16px;padding:20px;margin-top:20px;color:#333}
+.results-details h3{color:#7c3aed;margin-bottom:15px}
+.result-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #eee}
+.result-row:last-child{border-bottom:none}
+.practice-section{background:#fff;border-radius:16px;padding:20px;margin-top:20px;border-left:4px solid #ef4444}
+.practice-section.success{border-left-color:#22c55e}
+.practice-item{background:#fef2f2;border-radius:10px;padding:15px;margin-bottom:10px}
+.practice-item h4{color:#333;margin-bottom:8px;font-size:.95em}
+.practice-item p{color:#666;font-size:.85em;margin-bottom:10px}
+.practice-item ul{margin:10px 0;padding-left:20px;color:#666;font-size:.85em}
+.practice-item a{display:inline-block;background:#7c3aed;color:#fff;padding:8px 16px;border-radius:8px;text-decoration:none;font-size:.85em;font-weight:600}
+.strong-tag{display:inline-block;background:#e8f5e9;color:#2e7d32;padding:4px 10px;border-radius:15px;font-size:.8em;margin:3px;font-weight:500}
+.new-badge{background:#fff3cd;border:2px solid #ffc107;border-radius:12px;padding:15px;margin-top:15px;text-align:center}
+.new-badge .badge-icon{font-size:2em}
+.streak-box{background:linear-gradient(135deg,#7c3aed,#4c1d95);border-radius:12px;padding:15px;margin-top:15px;color:#fff;text-align:center}
+.streak-num{font-size:1.5em;font-weight:700}
+.name-section{margin-bottom:20px}
+.name-section input{width:100%;padding:14px;border:2px solid #e0e0e0;border-radius:12px;font-size:16px}
+.name-section input:focus{outline:none;border-color:#7c3aed}
+.start-card{text-align:center}
+.start-card h2{color:#7c3aed;margin-bottom:10px}
+.start-card p{color:#666;margin-bottom:20px}
+.start-info{background:#ede9fe;border-radius:12px;padding:15px;margin-bottom:20px;text-align:left}
+.start-info li{margin:8px 0;color:#555}
+</style>
+</head>
+<body>
+<div class="container">
+  <div id="startScreen">
+    <div class="header">
+      <div class="quiz-badge">Challenge #3</div>
+      <span class="level-tag">Conversation Class</span>
+      <h1>🛂 Immigration Information Window Challenge</h1>
+      <p style="color:#666;font-size:.9em">Class 10 · At the Information Window</p>
+    </div>
+    <div class="card start-card">
+      <h2>Welcome! 👋</h2>
+      <p>Real-world scenario challenge — think critically!</p>
+      <div class="start-info"><ul>
+        <li>⏱️ 5 questions · 10 minutes</li>
+        <li>⭐ Earn XP for correct answers</li>
+        <li>🏆 Unlock badges for great performance</li>
+        <li>📊 Get personalized practice tips</li>
+      </ul></div>
+      <div class="name-section">
+        <input type="text" id="studentName" placeholder="Enter your full name...">
+      </div>
+      <select id="studentClass" style="width:100%;padding:14px;border:2px solid #e0e0e0;border-radius:12px;font-size:16px;margin-bottom:15px">
+        <option value="">-- Select your class --</option>
+        <optgroup label="Laura Ebel">
+          <option value="3090 - Mon/Wed 6:30 PM (Laura)">Mon/Wed 6:30 PM - 8:00 PM (Laura)</option>
+          <option value="3096 - Tue/Thu 9:00 AM (Laura)">Tue/Thu 9:00 AM - 10:30 AM (Laura)</option>
+        </optgroup>
+      </select>
+      <button class="btn" onclick="startQuiz()">Start Challenge →</button>
+    </div>
+  </div>
+
+  <div id="quizScreen" style="display:none">
+    <div class="header">
+      <div class="quiz-badge">Challenge #3</div>
+      <h1>🛂 Immigration Information Window Challenge</h1>
+      <div class="timer-bar" id="timerBar"><span>⏱️</span><span class="time" id="timer">10:00</span></div>
+    </div>
+    <div class="card">
+      <div class="progress-row">
+        <span class="progress-text">Question <span id="currentQ">1</span> of <span id="totalQ">5</span></span>
+        <span class="xp-display">⭐ <span id="currentXP">0</span> XP</span>
+      </div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressBar" style="width:20.00%"></div></div>
+      <div id="questionContainer"></div>
+      <button class="btn" id="checkBtn" onclick="checkAnswer()" disabled>Check Answer</button>
+      <button class="btn btn-next" id="nextBtn" onclick="nextQuestion()" style="display:none">Next Question →</button>
+    </div>
+  </div>
+
+  <div class="results-screen" id="resultsScreen">
+    <div class="results-card">
+      <p style="opacity:.8">Challenge Complete!</p>
+      <div class="results-score" id="finalScore">0/5</div>
+      <div class="results-label" id="finalPercent">0%</div>
+      <div class="results-message" id="resultsMessage">Great job!</div>
+      <div class="results-xp">You earned <span id="earnedXP">0</span> XP! ⭐</div>
+    </div>
+    <div class="results-details">
+      <h3>📊 Your Results</h3>
+      <div class="result-row"><span>Correct Answers</span><span id="correctCount">0/5</span></div>
+      <div class="result-row"><span>Time Taken</span><span id="timeTaken">0:00</span></div>
+      <div class="result-row"><span>XP Earned</span><span id="xpEarned">0</span></div>
+    </div>
+    <div class="practice-section" id="practiceSection">
+      <h3 id="practiceTitle">📚 Areas to Practice</h3>
+      <div id="practiceContent"></div>
+    </div>
+    <div id="newBadgeSection"></div>
+    <div id="streakSection"></div>
+    <button id="formSubmitBtn" onclick="submitToTeacher()" style="background:linear-gradient(135deg,#f5a623,#e8470a);color:#fff;padding:20px;border-radius:14px;font-size:1.15em;font-weight:800;text-align:center;border:none;display:block;width:100%;box-sizing:border-box;letter-spacing:.5px;box-shadow:0 6px 20px rgba(245,166,35,.4);cursor:pointer;margin-top:20px;">📨 SUBMIT RESULTS TO TEACHER →</button>
+    <div id="submitStatus" style="display:none;margin-top:16px;background:#f0fdf4;border:2px solid #22c55e;border-radius:12px;padding:16px;text-align:center;color:#15803d"></div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY='SQA_CONV_Challenge_Progress',QUIZ_ID=3,QUIZ_NAME="Conversation Challenge Quiz #3: At the Immigration Information Window (Term V 2026)",LEVEL='Conversation';
+const allQuestions=[{"q": "Immigration Officer: \"According to our automated database, your application package is still marked as incomplete, so I cannot issue a temporary stamp today.\" Candidate: \"I see what you mean, however...\" Choose the best continuation.", "opts": ["...why did you say that when my status has been updated online already?", "...my status has been updated online, but the receipt notice has not been mailed yet.", "...an automated gatekeeper is updating my status online yesterday.", "...I want to know if my status was updated online by you."], "correct": 1, "category": "grammar", "explanation": "The candidate lowers the officer's defenses with a softener ('I see what you mean, however...') followed by present perfect passive ('has been updated' / 'has not been mailed') to give an objective, factual narrative."}, {"q": "Immigration Officer: \"Our processing time is standard, but we are currently facing an unprecedented backlog of regional applications.\" Candidate: \"I understand you are incredibly busy, but...\" Choose the best continuation.", "opts": ["...where did you put my file in that huge backlog?", "...could you clarify what the processing time is for cases within your jurisdiction?", "...do you know why is the processing time so long?", "...could you expedite my application because this jargon is confusing."], "correct": 1, "category": "grammar", "explanation": "A softener ('I understand you are incredibly busy, but...') plus an embedded question. In embedded questions the word order flips back to a statement ('could you clarify what the processing time is...'), avoiding an aggressive tone."}, {"q": "Immigration Officer: \"Your spelling matches your current passport, but it doesn't match the spelling printed on your historical entry visa from five years ago.\" Candidate: \"I completely understand the confusion. If you look at this historical record, you can see that...\" Choose the best continuation.", "opts": ["...a clerical error was made on my original document, and I need to rectify it.", "...an automated gatekeeper was rectifying my document last week.", "...you made a minor clerical error and you must fix it immediately.", "...my legal counsel has been compromised by this contradictory document."], "correct": 0, "category": "vocabulary", "explanation": "Past simple passive ('a clerical error was made') reports an official mistake neutrally, without blaming the worker. 'Rectify' = to put the mistake right."}, {"q": "Immigration Officer: \"The written guidelines on our website are somewhat ambiguous about this specific visa category, so I can't give you a definitive answer at this window.\" Candidate: \"Since the rules online are contradictory,...\" Choose the best continuation.", "opts": ["...is a supervisor here to change your mind?", "...I want you to use your discretion to expedite my case right now.", "...do you know if a supervisor is here who could review this exception?", "...I hope to have escalated this matter before it compromises my status."], "correct": 2, "category": "grammar", "explanation": "The embedded-question formula 'do you know if a supervisor is here...' politely but assertively asks for a higher authority ('escalate') when rules are confusing or 'contradictory.'"}, {"q": "Immigration Officer: \"I cannot accept a printout from a third-party website as valid legal proof of your current residency status.\" Candidate: \"I understand the policy. However, my formal status verification...\" Choose the best continuation.", "opts": ["...has been requested through my legal counsel, but it is taking too long.", "...is compromising my safety because of a disclaimer on your website.", "...was mandates by a different government agency last month.", "...has been finalized by the system, but the physical document has not been issued yet."], "correct": 3, "category": "grammar", "explanation": "Present perfect passive ('has been finalized' / 'has not been issued') gives a precise, factual status update about the 'status verification' document without informal language."}];
+const practiceResources={"grammar": {"title": "Grammar: Passive Voice & Embedded Questions", "description": "Staying calm, formal, and blameless with an official.", "tips": ["Present perfect passive ('has been updated/finalized') = neutral status update.", "Past simple passive ('a clerical error was made') = report a mistake without blaming anyone.", "Embedded questions flip to statement order: 'Could you clarify what the processing time is...' (not 'what is...').", "Open with a softener: 'I see what you mean, however...' / 'I understand you are busy, but...'"], "link": "https://www.youtube.com/results?search_query=passive+voice+embedded+questions+english"}, "vocabulary": {"title": "Immigration & Formal Vocabulary", "description": "Words for handling official, bureaucratic conversations.", "tips": ["rectify = put right / fix · clerical error = a small administrative mistake", "backlog = a pile of pending work · jurisdiction = the area of authority", "escalate = raise an issue to a higher authority · expedite = speed up", "ambiguous / contradictory = unclear or conflicting · discretion = personal judgment"], "link": "https://www.youtube.com/results?search_query=formal+english+immigration+office+vocabulary"}};
+let questions=[],currentQuestion=0,score=0,xpEarned=0,answered=false,timerInterval,timeLeft=600,startTime,studentName='',studentClass='',studentLevel=LEVEL,categoryResults={};
+function getProgress(){const s=localStorage.getItem(STORAGE_KEY);return s?JSON.parse(s):{quizzes:{},totalXP:0,streak:0,badges:[],name:''};}
+function saveProgress(p){localStorage.setItem(STORAGE_KEY,JSON.stringify(p));}
+function startQuiz(){studentName=document.getElementById('studentName').value.trim();if(!studentName){alert('Please enter your name');return;}studentClass=document.getElementById('studentClass').value;if(!studentClass){alert('Please select your class');return;}const progress=getProgress();progress.name=studentName;saveProgress(progress);window._questionResults=[];questions=[...allQuestions];questions.forEach(q=>{if(!categoryResults[q.category])categoryResults[q.category]={correct:0,total:0};categoryResults[q.category].total++;});document.getElementById('startScreen').style.display='none';document.getElementById('quizScreen').style.display='block';document.getElementById('totalQ').textContent=questions.length;startTime=Date.now();startTimer();renderQuestion();}
+function startTimer(){timerInterval=setInterval(()=>{timeLeft--;document.getElementById('timer').textContent=Math.floor(timeLeft/60)+':'+String(timeLeft%60).padStart(2,'0');if(timeLeft<=60)document.getElementById('timerBar').classList.add('warning');if(timeLeft<=0){clearInterval(timerInterval);finishQuiz();}},1000);}
+function renderQuestion(){const q=questions[currentQuestion];document.getElementById('currentQ').textContent=currentQuestion+1;document.getElementById('progressBar').style.width=((currentQuestion+1)/questions.length*100)+'%';let html=`<div class="question"><div class="question-header"><div class="question-num">${currentQuestion+1}</div><div class="question-text">${q.q}</div></div><div class="options">`;q.opts.forEach((o,i)=>{html+=`<div class="option" data-idx="${i}" onclick="selectOption(this)"><div class="option-letter">${String.fromCharCode(65+i)}</div><div class="option-text">${o}</div></div>`;});html+=`</div><div class="feedback" id="feedback"></div></div>`;document.getElementById('questionContainer').innerHTML=html;document.getElementById('checkBtn').disabled=true;document.getElementById('checkBtn').style.display='block';document.getElementById('nextBtn').style.display='none';answered=false;}
+function selectOption(el){if(answered)return;document.querySelectorAll('.option').forEach(o=>o.classList.remove('selected'));el.classList.add('selected');document.getElementById('checkBtn').disabled=false;}
+function checkAnswer(){if(answered)return;answered=true;const sel=document.querySelector('.option.selected');if(!sel)return;const idx=parseInt(sel.dataset.idx),q=questions[currentQuestion],correct=idx===q.correct;if(correct)categoryResults[q.category].correct++;document.querySelectorAll('.option').forEach(o=>o.classList.add('disabled'));const chosenLetter=String.fromCharCode(65+idx);if(!window._questionResults)window._questionResults=[];window._questionResults.push('Q'+(currentQuestion+1)+':'+chosenLetter+(correct?'✓':'✗'));if(correct){sel.classList.add('correct');score++;xpEarned+=10;document.getElementById('currentXP').textContent=xpEarned;}else{sel.classList.add('incorrect');document.querySelectorAll('.option')[q.correct].classList.add('correct');}const fb=document.getElementById('feedback');fb.className='feedback '+(correct?'correct':'incorrect')+' show';fb.innerHTML=(correct?'✅ <strong>Correct!</strong> ':'❌ <strong>Not quite.</strong> ')+q.explanation;document.getElementById('checkBtn').style.display='none';document.getElementById('nextBtn').style.display='block';document.getElementById('nextBtn').textContent=currentQuestion<questions.length-1?'Next Question →':'See Results →';}
+function nextQuestion(){currentQuestion++;if(currentQuestion<questions.length)renderQuestion();else finishQuiz();}
+function finishQuiz(){clearInterval(timerInterval);const timeTaken=Math.round((Date.now()-startTime)/1000),percent=Math.round((score/questions.length)*100);if(percent===100)xpEarned+=20;else if(percent>=80)xpEarned+=10;if(timeTaken<180)xpEarned+=10;const progress=getProgress();progress.quizzes=progress.quizzes||{};progress.quizzes[QUIZ_ID]={score,total:questions.length,time:timeTaken,date:new Date().toISOString(),categories:categoryResults};progress.totalXP=(progress.totalXP||0)+xpEarned;const newBadges=[];progress.badges=progress.badges||[];if(!progress.badges.includes('first_steps')){progress.badges.push('first_steps');newBadges.push({name:'First Steps',icon:'🌟'});}if(percent===100&&!progress.badges.includes('sharpshooter')){progress.badges.push('sharpshooter');newBadges.push({name:'Sharpshooter',icon:'🎯'});}if(timeTaken<180&&!progress.badges.includes('speed_demon')){progress.badges.push('speed_demon');newBadges.push({name:'Speed Demon',icon:'⚡'});}const today=new Date().toDateString();if(progress.lastQuizDate!==today){progress.streak=(progress.streak||0)+1;progress.lastQuizDate=today;}if(progress.streak>=3&&!progress.badges.includes('on_fire')){progress.badges.push('on_fire');newBadges.push({name:'On Fire',icon:'🔥'});}saveProgress(progress);const{weakAreas,practiceHTML,status,practicePath}=generatePractice(percent);submitToForm(score,questions.length,percent,timeTaken,xpEarned,progress.totalXP,weakAreas,status,practicePath);document.getElementById('quizScreen').style.display='none';document.getElementById('resultsScreen').style.display='block';document.getElementById('finalScore').textContent=score+'/'+questions.length;document.getElementById('finalPercent').textContent=percent+'%';document.getElementById('earnedXP').textContent=xpEarned;document.getElementById('correctCount').textContent=score+'/'+questions.length;document.getElementById('timeTaken').textContent=Math.floor(timeTaken/60)+':'+String(timeTaken%60).padStart(2,'0');document.getElementById('xpEarned').textContent=xpEarned+' XP';let msg;if(percent===100)msg="🎉 PERFECT! You're amazing!";else if(percent>=90)msg="🌟 Excellent work!";else if(percent>=80)msg="👏 Great job!";else if(percent>=70)msg="👍 Good effort!";else if(percent>=60)msg="🌱 Keep practicing!";else msg="🤗 Don't give up!";document.getElementById('resultsMessage').textContent=msg;const ps=document.getElementById('practiceSection');if(percent>=80){ps.classList.add('success');document.getElementById('practiceTitle').innerHTML='✅ Great Job!';}document.getElementById('practiceContent').innerHTML=practiceHTML;if(newBadges.length>0){let h='';newBadges.forEach(b=>{h+=`<div class="new-badge"><div class="badge-icon">${b.icon}</div><h4>Badge Unlocked!</h4><p>${b.name}</p></div>`;});document.getElementById('newBadgeSection').innerHTML=h;}if(progress.streak>1)document.getElementById('streakSection').innerHTML=`<div class="streak-box"><div class="streak-num">🔥 ${progress.streak} Quiz Streak!</div></div>`;}
+function generatePractice(percent){const weak=[],strong=[];for(const[c,r]of Object.entries(categoryResults)){if(r.total>0&&(r.correct/r.total)<0.7)weak.push(c);else strong.push(c);}let html='';if(percent<60){html='<p style="color:#c62828;margin-bottom:15px;font-weight:600">Score below 60% — Please review:</p>';weak.forEach(a=>{if(practiceResources[a]){const r=practiceResources[a];html+=`<div class="practice-item"><h4>⚠️ ${r.title}</h4><p>${r.description}</p><ul>${r.tips.map(t=>`<li>${t}</li>`).join('')}</ul><a href="${r.link}" target="_blank">📺 Watch Videos</a></div>`;}});}else if(percent<80){html='<p style="margin-bottom:15px">Consider reviewing:</p>';weak.forEach(a=>{if(practiceResources[a]){const r=practiceResources[a];html+=`<div class="practice-item"><h4>📖 ${r.title}</h4><p>${r.description}</p><a href="${r.link}" target="_blank">📺 Practice More</a></div>`;}});strong.forEach(a=>{if(practiceResources[a])html+=`<span class="strong-tag">✓ ${practiceResources[a].title}</span>`;});}else{html='<p style="color:#2e7d32;margin-bottom:10px">You did great on:</p>';Object.keys(practiceResources).forEach(a=>html+=`<span class="strong-tag">✓ ${practiceResources[a].title}</span>`);}const status=percent>=80?'Great work!':percent>=60?'Review Recommended':'Practice Required';const path=weak.length>0?weak.map(a=>practiceResources[a]?practiceResources[a].title:a).join(', '):'None needed';return{weakAreas:path,practiceHTML:html,status,practicePath:path};}
+function submitToForm(score,total,percent,time,xp,totalXP,weak,status,path){const timeStr=Math.floor(time/60)+':'+String(time%60).padStart(2,'0');const qResults=(window._questionResults||[]).join(',');window._formPayload={'entry.259682097':studentName,'entry.1103266958':studentClass,'entry.2006644851':studentLevel,'entry.1804734502':QUIZ_NAME,'entry.668038567':qResults,'entry.543583340':score+'/'+total,'entry.875764515':percent+'%','entry.62512107':timeStr,'entry.886790949':String(xp),'entry.733779557':String(totalXP),'entry.134668824':weak,'entry.1786008516':status,'entry.998097996':path};}
+function submitToTeacher(){const btn=document.getElementById('formSubmitBtn');if(btn){btn.disabled=true;btn.textContent='⏳ Submitting...';}const formData=new FormData();if(window._formPayload){for(const[k,v]of Object.entries(window._formPayload)){formData.append(k,v);}}fetch('https://docs.google.com/forms/d/e/1FAIpQLScbYSWMAdvA_3fBPzbS_BNUYqLFXhpOHe_LRWhyjK6yjSehmQ/formResponse',{method:'POST',mode:'no-cors',body:formData}).catch(function(){});const statusDiv=document.getElementById('submitStatus');if(statusDiv){statusDiv.innerHTML='✅ <strong>Results submitted successfully!</strong><br><span style="font-size:0.9em;color:#555">Your teacher has received your quiz results.</span>';statusDiv.style.display='block';}if(btn){btn.style.display='none';}}
+</script>
+</body>
+</html>
