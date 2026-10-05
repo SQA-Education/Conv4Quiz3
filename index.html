@@ -101,8 +101,7 @@ body{font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#7c3aed
       <select id="studentClass" style="width:100%;padding:14px;border:2px solid #e0e0e0;border-radius:12px;font-size:16px;margin-bottom:15px">
         <option value="">-- Select your class --</option>
         <optgroup label="Laura Ebel">
-          <option value="3090 - Mon/Wed 6:30 PM (Laura)">Mon/Wed 6:30 PM - 8:00 PM (Laura)</option>
-          <option value="3096 - Tue/Thu 9:00 AM (Laura)">Tue/Thu 9:00 AM - 10:30 AM (Laura)</option>
+          <option value="CONV-MW1830">Conversation — Class 7 · Mon/Wed 6:30 PM (Laura)</option>
         </optgroup>
       </select>
       <button class="btn" onclick="startQuiz()">Start Challenge →</button>
@@ -169,6 +168,43 @@ function finishQuiz(){clearInterval(timerInterval);const timeTaken=Math.round((D
 function generatePractice(percent){const weak=[],strong=[];for(const[c,r]of Object.entries(categoryResults)){if(r.total>0&&(r.correct/r.total)<0.7)weak.push(c);else strong.push(c);}let html='';if(percent<60){html='<p style="color:#c62828;margin-bottom:15px;font-weight:600">Score below 60% — Please review:</p>';weak.forEach(a=>{if(practiceResources[a]){const r=practiceResources[a];html+=`<div class="practice-item"><h4>⚠️ ${r.title}</h4><p>${r.description}</p><ul>${r.tips.map(t=>`<li>${t}</li>`).join('')}</ul><a href="${r.link}" target="_blank">📺 Watch Videos</a></div>`;}});}else if(percent<80){html='<p style="margin-bottom:15px">Consider reviewing:</p>';weak.forEach(a=>{if(practiceResources[a]){const r=practiceResources[a];html+=`<div class="practice-item"><h4>📖 ${r.title}</h4><p>${r.description}</p><a href="${r.link}" target="_blank">📺 Practice More</a></div>`;}});strong.forEach(a=>{if(practiceResources[a])html+=`<span class="strong-tag">✓ ${practiceResources[a].title}</span>`;});}else{html='<p style="color:#2e7d32;margin-bottom:10px">You did great on:</p>';Object.keys(practiceResources).forEach(a=>html+=`<span class="strong-tag">✓ ${practiceResources[a].title}</span>`);}const status=percent>=80?'Great work!':percent>=60?'Review Recommended':'Practice Required';const path=weak.length>0?weak.map(a=>practiceResources[a]?practiceResources[a].title:a).join(', '):'None needed';return{weakAreas:path,practiceHTML:html,status,practicePath:path};}
 function submitToForm(score,total,percent,time,xp,totalXP,weak,status,path){const timeStr=Math.floor(time/60)+':'+String(time%60).padStart(2,'0');const qResults=(window._questionResults||[]).join(',');window._formPayload={'entry.259682097':studentName,'entry.1103266958':studentClass,'entry.2006644851':studentLevel,'entry.1804734502':QUIZ_NAME,'entry.668038567':qResults,'entry.543583340':score+'/'+total,'entry.875764515':percent+'%','entry.62512107':timeStr,'entry.886790949':String(xp),'entry.733779557':String(totalXP),'entry.134668824':weak,'entry.1786008516':status,'entry.998097996':path};}
 function submitToTeacher(){const btn=document.getElementById('formSubmitBtn');if(btn){btn.disabled=true;btn.textContent='⏳ Submitting...';}const formData=new FormData();if(window._formPayload){for(const[k,v]of Object.entries(window._formPayload)){formData.append(k,v);}}fetch('https://docs.google.com/forms/d/e/1FAIpQLScbYSWMAdvA_3fBPzbS_BNUYqLFXhpOHe_LRWhyjK6yjSehmQ/formResponse',{method:'POST',mode:'no-cors',body:formData}).catch(function(){});const statusDiv=document.getElementById('submitStatus');if(statusDiv){statusDiv.innerHTML='✅ <strong>Results submitted successfully!</strong><br><span style="font-size:0.9em;color:#555">Your teacher has received your quiz results.</span>';statusDiv.style.display='block';}if(btn){btn.style.display='none';}}
+</script>
+<script>
+/* SQA auto-identity (2026-10) — when opened from the portal (logged in), prefill the student's
+   name + class from the URL (?name/?cls/?cnum) so they never type a name or pick a class.
+   Submission still ties to ?sid. Additive + try/catch — never blocks the page. */
+(function(){
+  try{
+    var Q=new URLSearchParams(location.search);
+    var nm=(Q.get('name')||'').trim(), cls=(Q.get('cls')||'').trim(), cnum=(Q.get('cnum')||'').trim();
+    if(!nm && !cls && !cnum) return;
+    function fill(){
+      var nameEl=document.getElementById('studentName');
+      if(nm && nameEl && 'value' in nameEl){
+        nameEl.value=nm; nameEl.readOnly=true; nameEl.style.background='#efeafa';
+        if(!document.getElementById('sqa-id-note')){
+          var n=document.createElement('div'); n.id='sqa-id-note';
+          n.style.cssText='font-size:13px;color:#2f8a5b;margin-top:4px;font-weight:600';
+          n.textContent='✓ Signed in as '+nm;
+          if(nameEl.parentNode) nameEl.parentNode.insertBefore(n, nameEl.nextSibling);
+        }
+      }
+      var selEl=document.getElementById('classSelect')||document.getElementById('studentClass');
+      if(selEl && selEl.tagName==='SELECT'){
+        var opts=selEl.options, pick=-1, real=[];
+        for(var i=0;i<opts.length;i++){ if(!opts[i].value) continue; real.push(i);
+          var v=(opts[i].value||'').toLowerCase(), t=(opts[i].text||'').toLowerCase();
+          if(cls && (v.indexOf(cls.toLowerCase())>=0 || t.indexOf(cls.toLowerCase())>=0)){pick=i;break;}
+          if(cnum && t.indexOf('class '+cnum)>=0){pick=i;break;}
+        }
+        if(pick<0 && real.length===1) pick=real[0];
+        if(pick>=0){ selEl.selectedIndex=pick; selEl.disabled=true; selEl.style.background='#efeafa'; }
+      }
+    }
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',function(){setTimeout(fill,80);});
+    else setTimeout(fill,80);
+  }catch(e){}
+})();
 </script>
 </body>
 </html>
