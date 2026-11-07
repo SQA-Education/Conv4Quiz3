@@ -206,5 +206,53 @@ function submitToTeacher(){const btn=document.getElementById('formSubmitBtn');if
   }catch(e){}
 })();
 </script>
+<script>
+/* SQA portal save — saves the quiz to the portal WITHOUT login (submit-final, kind=quiz),
+   matched by name+class. Additive; leaves the Google Form post untouched. */
+(function(){
+  if(window.__sqaPortalSave)return; window.__sqaPortalSave=true;
+  var U="https://ponilnhyehnzycspksah.supabase.co",K="sb_publishable_YWM3O7i8aHWBGOZM-vAnEw_bR4XStKm",LV="Conversation",SS=10;
+  function g(id){var e=document.getElementById(id);return e?(''+e.value):'';}
+  function num(id){var e=document.getElementById(id);if(!e)return null;var v=(''+(e.textContent||e.value||'')).replace(/[^0-9]/g,'');return v===''?null:parseInt(v,10);}
+  function ui(html,showBtn){
+    var s=document.getElementById('submitStatus'),b=document.getElementById('formSubmitBtn');
+    if(s){s.style.display='block';s.innerHTML=html;}
+    if(b){ if(showBtn){b.style.display='block';b.disabled=false;b.textContent='📨 SUBMIT RESULTS TO TEACHER →';} else {b.style.display='none';} }
+  }
+  function scores(){
+    var c=num('correctCount'); var t=num('totalQ');
+    if(c==null&&typeof score!=='undefined')c=score;
+    if(t==null&&typeof questions!=='undefined'&&questions)t=questions.length;
+    var pct=(c!=null&&t)?Math.round(c/t*100):null;
+    return {percent:pct,correct:c,total:t};
+  }
+  async function save(){
+    var nm=g('studentName')||(typeof studentName!=='undefined'?studentName:'')||'';
+    var cl=g('className')||g('studentClass')||g('classSelect')||'';
+    if(!nm){ ui('⚠️ <strong>We need your name.</strong><br><span style="font-size:.9em;color:#555">Go back, type your name, then submit again.</span>',true); return; }
+    var body=JSON.stringify({name:nm,className:cl,level:LV,kind:"quiz",session:SS,scores:scores()});
+    for(var i=0;i<3;i++){
+      try{
+        var r=await fetch(U+"/functions/v1/submit-final",{method:"POST",headers:{"Content-Type":"application/json","apikey":K,"Authorization":"Bearer "+K},body:body});
+        var j={}; try{ j=await r.json(); }catch(e){}
+        if(r.ok && j && j.status==='ok'){ ui('✅ <strong>Results submitted successfully!</strong><br><span style="font-size:.9em;color:#555">Your teacher has received your quiz results.</span>',false); return; }
+        if(j && (j.status==='no_student'||j.status==='not_enrolled')){ ui('⚠️ <strong>We could not find your class.</strong><br><span style="font-size:.9em;color:#555">Check that your name matches how you registered, then tap the button again.</span>',true); return; }
+      }catch(e){}
+      await new Promise(function(res){setTimeout(res,900*(i+1));});
+    }
+    ui('⚠️ <strong>Not sent — please tap the button again.</strong><br><span style="font-size:.9em;color:#555">Your internet dropped for a second. Your results were NOT saved yet.</span>',true);
+  }
+  var _o=window.submitToTeacher;
+  if(typeof _o==='function'){
+    window.submitToTeacher=function(){
+      var r; try{ r=_o.apply(this,arguments); }catch(e){}
+      ui('⏳ <strong>Sending to your teacher…</strong>',false);
+      try{ save(); }catch(e){ ui('⚠️ <strong>Not sent — please tap the button again.</strong>',true); }
+      return r;
+    };
+  }
+})();
+</script>
+
 </body>
 </html>
