@@ -213,14 +213,14 @@ function submitToTeacher(){const btn=document.getElementById('formSubmitBtn');if
   if(window.__sqaPortalSave)return; window.__sqaPortalSave=true;
   var U="https://ponilnhyehnzycspksah.supabase.co",K="sb_publishable_YWM3O7i8aHWBGOZM-vAnEw_bR4XStKm",LV="Conversation",SS=10;
   function g(id){var e=document.getElementById(id);return e?(''+e.value):'';}
-  function num(id){var e=document.getElementById(id);if(!e)return null;var v=(''+(e.textContent||e.value||'')).replace(/[^0-9]/g,'');return v===''?null:parseInt(v,10);}
+  function firstNum(id){var e=document.getElementById(id);if(!e)return null;var m=(''+(e.textContent||e.value||'')).match(/[0-9]+/);return m?parseInt(m[0],10):null;}
   function ui(html,showBtn){
     var s=document.getElementById('submitStatus'),b=document.getElementById('formSubmitBtn');
     if(s){s.style.display='block';s.innerHTML=html;}
     if(b){ if(showBtn){b.style.display='block';b.disabled=false;b.textContent='📨 SUBMIT RESULTS TO TEACHER →';} else {b.style.display='none';} }
   }
   function scores(){
-    var c=num('correctCount'); var t=num('totalQ');
+    var c=(typeof score!=='undefined'&&score!=null)?score:firstNum('correctCount'); var t=(typeof questions!=='undefined'&&questions&&questions.length)?questions.length:firstNum('totalQ');
     if(c==null&&typeof score!=='undefined')c=score;
     if(t==null&&typeof questions!=='undefined'&&questions)t=questions.length;
     var pct=(c!=null&&t)?Math.round(c/t*100):null;
